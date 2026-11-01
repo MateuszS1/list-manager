@@ -2,6 +2,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import generic
 
+from manager.forms import TaskForm
 from manager.models import Task, Tag
 
 
@@ -16,7 +17,7 @@ class TagListView(generic.ListView):
 
 class TaskCreateView(generic.CreateView):
     model = Task
-    fields = "__all__"
+    form_class = TaskForm
     success_url = reverse_lazy("manager:task-list")
 
 
@@ -28,7 +29,7 @@ class TagCreateView(generic.CreateView):
 
 class TaskUpdateView(generic.UpdateView):
     model = Task
-    fields = "__all__"
+    form_class = TaskForm
     success_url = reverse_lazy("manager:task-list")
 
 
