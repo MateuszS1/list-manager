@@ -13,8 +13,8 @@ class Tag(models.Model):
 
 class Task(models.Model):
     content = models.CharField(max_length=255)
-    datetime = models.DateTimeField()
-    deadline = models.DateTimeField(null=True)
+    datetime = models.DateTimeField(auto_now_add=True)
+    deadline = models.DateTimeField(null=True, blank=True)
     is_completed = models.BooleanField(default=False)
     tags = models.ManyToManyField(
         Tag,
@@ -23,7 +23,7 @@ class Task(models.Model):
     )
 
     class Meta:
-        ordering = ["content"]
+        ordering = ["is_completed", "-datetime"]
 
     def __str__(self):
         return self.content
