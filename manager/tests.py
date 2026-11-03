@@ -3,6 +3,7 @@ import datetime
 from django.test import TestCase
 from django.urls import reverse
 
+from manager.forms import TaskForm
 from manager.models import Tag, Task
 
 
@@ -144,8 +145,14 @@ class TaskViewsTest(TestCase):
         )
         Task.objects.get(id=self.task.id).refresh_from_db()
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(Task.objects.get(id=self.task.id).content, "Task description 2")
-        self.assertEqual(Task.objects.get(id=self.task.id).deadline.date(), deadline)
+        self.assertEqual(
+            Task.objects.get(id=self.task.id).content,
+            "Task description 2"
+        )
+        self.assertEqual(
+            Task.objects.get(id=self.task.id).deadline.date(),
+            deadline
+        )
         self.assertEqual(Task.objects.get(id=self.task.id).tags.count(), 1)
 
     def test_swap_task_status(self):
@@ -161,3 +168,42 @@ class TaskViewsTest(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Task.objects.filter(id=self.task.id).exists())
+
+
+class TaskFormTests(TestCase):
+    def setUp(self):
+        self.tag1 = Tag.objects.create(name="test_tag1")
+        self.tag2 = Tag.objects.create(name="test_tag2")
+
+        self.task = Task.objects.create(
+            content="Task description 1",
+            deadline=datetime.date.today(),
+        )
+
+    def test_form_saves_task_with_selected_tags(self):
+        deadline = datetime.date.today() - datetime.timedelta(days=1)
+        form = TaskForm(
+            data={
+                "content": "Task description 2",
+                "deadline": deadline,
+                "tags": [self.tag1.pk, self.tag2.pk],
+            },
+            instance=self.task,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+        task = form.save()
+
+        self.assertEqual(task.content, "Task description 2")
+        self.assertEqual(task.deadline.date(), deadline)
+        self.assertCountEqual(
+            task.tags.all(),
+            [self.tag1, self.tag2],
+        )
+
+    def test_missing_required_fields(self):
+        form = TaskForm(data={})
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("content", form.errors)
