@@ -2,6 +2,7 @@ import datetime
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from manager.forms import TaskForm
 from manager.models import Tag, Task
@@ -78,7 +79,12 @@ class TaskModelTests(TestCase):
 
         self.task = Task.objects.create(
             content="Task description 1",
-            deadline=datetime.date.today(),
+            deadline=timezone.make_aware(
+                datetime.datetime.combine(
+                    datetime.date.today(),
+                    datetime.time.min
+                )
+            ),
         )
 
     def test_task_str(self):
@@ -115,7 +121,12 @@ class TaskViewsTest(TestCase):
 
         self.task = Task.objects.create(
             content="Task description 1",
-            deadline=datetime.date.today(),
+            deadline=timezone.make_aware(
+                datetime.datetime.combine(
+                    datetime.date.today(),
+                    datetime.time.min
+                )
+            ),
         )
 
     def test_create_task(self):
@@ -133,7 +144,12 @@ class TaskViewsTest(TestCase):
         self.assertEqual(task.tags.count(), 0)
 
     def test_update_task_status(self):
-        deadline = datetime.date.today() - datetime.timedelta(days=1)
+        deadline = timezone.make_aware(
+            datetime.datetime.combine(
+                datetime.date.today() - datetime.timedelta(days=1),
+                datetime.time.min
+            )
+        )
         response = self.client.post(
             reverse("manager:task-update", kwargs={"pk": self.task.id}),
             {
@@ -150,7 +166,7 @@ class TaskViewsTest(TestCase):
             "Task description 2"
         )
         self.assertEqual(
-            Task.objects.get(id=self.task.id).deadline.date(),
+            Task.objects.get(id=self.task.id).deadline,
             deadline
         )
         self.assertEqual(Task.objects.get(id=self.task.id).tags.count(), 1)
@@ -177,11 +193,21 @@ class TaskFormTests(TestCase):
 
         self.task = Task.objects.create(
             content="Task description 1",
-            deadline=datetime.date.today(),
+            deadline=timezone.make_aware(
+                datetime.datetime.combine(
+                    datetime.date.today(),
+                    datetime.time.min
+                )
+            ),
         )
 
     def test_form_saves_task_with_selected_tags(self):
-        deadline = datetime.date.today() - datetime.timedelta(days=1)
+        deadline = timezone.make_aware(
+            datetime.datetime.combine(
+                datetime.date.today() - datetime.timedelta(days=1),
+                datetime.time.min
+            )
+        )
         form = TaskForm(
             data={
                 "content": "Task description 2",
@@ -196,7 +222,7 @@ class TaskFormTests(TestCase):
         task = form.save()
 
         self.assertEqual(task.content, "Task description 2")
-        self.assertEqual(task.deadline.date(), deadline)
+        self.assertEqual(task.deadline, deadline)
         self.assertCountEqual(
             task.tags.all(),
             [self.tag1, self.tag2],
