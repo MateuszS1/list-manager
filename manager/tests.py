@@ -6,6 +6,35 @@ from django.urls import reverse
 from manager.models import Tag, Task
 
 
+class TagModelTests(TestCase):
+    def setUp(self) -> None:
+        self.tag = Tag.objects.create(name="test_tag1")
+
+    def test_task_type_max_length(self):
+        name_max_length = self.tag._meta.get_field(
+            "name"
+        ).max_length
+
+        self.assertEqual(255, name_max_length)
+
+    def test_task_type_str(self):
+        self.assertEqual(
+            self.tag.name,
+            str(self.tag)
+        )
+
+    def test_task_type_ordering(self):
+        Tag.objects.create(name="test_tag3")
+        Tag.objects.create(name="test_tag2")
+
+        tags = Tag.objects.all()
+
+        self.assertEqual(
+            ["test_tag1", "test_tag2", "test_tag3"],
+            list(tags.values_list("name", flat=True))
+        )
+
+
 class TagViewsTest(TestCase):
     def setUp(self) -> None:
         self.tag = Tag.objects.create(name="test_tag1")
@@ -40,6 +69,43 @@ class TagViewsTest(TestCase):
         self.assertFalse(
             Tag.objects.filter(id=self.tag.id).exists()
         )
+
+
+class TaskModelTests(TestCase):
+    def setUp(self) -> None:
+        self.tag = Tag.objects.create(name="test_tag1")
+
+        self.task = Task.objects.create(
+            content="Task description 1",
+            deadline=datetime.date.today(),
+        )
+
+    def test_task_str(self):
+        self.assertEqual(
+            self.task.content,
+            str(self.task)
+        )
+
+    def test_task_ordering(self):
+        Task.objects.create(
+            content="Task description 3",
+            is_completed=True
+        )
+        Task.objects.create(
+            content="Task description 2",
+        )
+
+        task = Task.objects.all()
+
+        self.assertEqual(
+            ["Task description 2", "Task description 1", "Task description 3"],
+            list(task.values_list("content", flat=True))
+        )
+
+    def test_tag_relationship(self):
+        self.task.tags.add(self.tag)
+        self.assertIn(self.tag, self.task.tags.all())
+        self.assertIn(self.task, self.tag.tasks.all())
 
 
 class TaskViewsTest(TestCase):
