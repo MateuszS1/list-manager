@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+  <h1>
+    TODO list
+    <a href="{% url 'manager:task-create' %}" class="btn btn-primary link-to-page" style="float: right">
+      Add Task
+    </a>
+  </h1>
+  {% if task_list %}
+    <ol>
+      {% for task in task_list %}
+        <div><b>
+          {{ task.content }}
+          {% if task.is_completed == False %}
+            <span style="color: red">Not done</span>
+            <a href="{% url 'manager:task-swap' pk=task.pk %}" class="btn btn-success link-to-page" style="float: right">
+              Complete
+            </a>
+          {% else %}
+            <span style="color: green">Done</span>
+            <a href="{% url 'manager:task-swap' pk=task.pk %}" class="btn btn-secondary link-to-page" style="float: right">
+              Undo
+            </a>
+          {% endif %}
+        </b></div>
+        <div><small>
+          Created: {{ task.datetime }}
+          {% if task.deadline %}
+            <span style="color: maroon">Deadline: {{ task.deadline }}</span>
+          {% endif %}
+        </small></div>
+        <div>
+          <span style="color: gray">Tags: {% for tag in task.tags.all %} {{ tag.name }} {% endfor %}</span>
+          <a href="{% url 'manager:task-update' pk=task.pk %}" class="link-to-page">Update</a>
+          <a href="{% url 'manager:task-delete' pk=task.pk %}" class="link-to-page">Delete</a>
+        </div>
+        <div role="separator" class="dropdown-divider my-1"></div>
+      {% endfor %}
+    </ol>
+  {% endif %}
+{% endblock %}
